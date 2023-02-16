@@ -26,7 +26,11 @@ use windows::Win32::System::Threading::{
 
 pub static SEARCH_STR: &str = "-----BEGIN PUBLIC KEY-----";
 
-fn read_process_memory(process_handle: HANDLE, addr: usize, size: usize) -> anyhow::Result<Vec<u8>> {
+fn read_process_memory(
+    process_handle: HANDLE,
+    addr: usize,
+    size: usize,
+) -> anyhow::Result<Vec<u8>> {
     let mut buffer = vec![0u8; size];
     unsafe {
         ReadProcessMemory(
@@ -35,7 +39,8 @@ fn read_process_memory(process_handle: HANDLE, addr: usize, size: usize) -> anyh
             buffer.as_mut_ptr() as _,
             size,
             None,
-        ).ok()?
+        )
+        .ok()?
     };
     Ok(buffer)
 }
@@ -180,11 +185,8 @@ fn main() -> anyhow::Result<()> {
 
         let mut cursor = Cursor::new(read_process_memory(process_handle, reference - 0x5c, 4)?);
         let username_length = cursor.read_u32::<LittleEndian>()?;
-        let username = read_process_memory(
-            process_handle,
-            reference - 0x6c,
-            username_length as usize,
-        )?;
+        let username =
+            read_process_memory(process_handle, reference - 0x6c, username_length as usize)?;
         info!("username={}", String::from_utf8(username)?);
 
         let mut cursor = Cursor::new(read_process_memory(process_handle, reference - 0x44, 4)?);
@@ -195,17 +197,31 @@ fn main() -> anyhow::Result<()> {
         let wxid = read_process_memory(process_handle, wxid_addr as usize, wxid_length as usize)?;
         info!("wxid={}", String::from_utf8(wxid)?);
 
-        let mobile_type_length = Cursor::new(read_process_memory(process_handle, reference - 0xc, 4)?).read_u32::<LittleEndian>()?;
-        let mobile_type = read_process_memory(process_handle, reference - 0x1c, mobile_type_length as usize)?;
+        let mobile_type_length =
+            Cursor::new(read_process_memory(process_handle, reference - 0xc, 4)?)
+                .read_u32::<LittleEndian>()?;
+        let mobile_type = read_process_memory(
+            process_handle,
+            reference - 0x1c,
+            mobile_type_length as usize,
+        )?;
         info!("mobile_type={}", String::from_utf8(mobile_type)?);
 
-        let tel_length = Cursor::new(read_process_memory(process_handle, reference - 0x47c, 4)?).read_u32::<LittleEndian>()?;
-        let tel = read_process_memory(process_handle, reference - 0x48c, tel_length as usize)?;
-        info!("tel={}", String::from_utf8(tel)?);
+        // let tel_length = Cursor::new(read_process_memory(process_handle, reference - 0x47c, 4)?).read_u32::<LittleEndian>()?;
+        // let tel = read_process_memory(process_handle, reference - 0x48c, tel_length as usize)?;
+        // info!("tel={}", String::from_utf8(tel)?);
 
-        let sqlite_key_length = Cursor::new(read_process_memory(process_handle, reference - 0x8c, 4)?).read_u32::<LittleEndian>()?;
-        let sqlite_key_addr = Cursor::new(read_process_memory(process_handle, reference - 0x90, 4)?).read_u32::<LittleEndian>()?;
-        let sqlite_key = read_process_memory(process_handle, sqlite_key_addr as usize, sqlite_key_length as usize)?;
+        let sqlite_key_length =
+            Cursor::new(read_process_memory(process_handle, reference - 0x8c, 4)?)
+                .read_u32::<LittleEndian>()?;
+        let sqlite_key_addr =
+            Cursor::new(read_process_memory(process_handle, reference - 0x90, 4)?)
+                .read_u32::<LittleEndian>()?;
+        let sqlite_key = read_process_memory(
+            process_handle,
+            sqlite_key_addr as usize,
+            sqlite_key_length as usize,
+        )?;
         // info!("sqlite_key={:?}", sqlite_key);
         let mut output = String::new();
         output += "[";
@@ -215,16 +231,26 @@ fn main() -> anyhow::Result<()> {
         output += "]";
         info!("sqlite_key={}", output);
 
-        let pubkey_length = Cursor::new(read_process_memory(process_handle, reference + 0x10, 4)?).read_u32::<LittleEndian>()?;
-        let pubkey_addr = Cursor::new(read_process_memory(process_handle, reference, 4)?).read_u32::<LittleEndian>()?;
-        let pubkey = read_process_memory(process_handle, pubkey_addr as usize, pubkey_length as usize)?;
+        let pubkey_length = Cursor::new(read_process_memory(process_handle, reference + 0x10, 4)?)
+            .read_u32::<LittleEndian>()?;
+        let pubkey_addr = Cursor::new(read_process_memory(process_handle, reference, 4)?)
+            .read_u32::<LittleEndian>()?;
+        let pubkey =
+            read_process_memory(process_handle, pubkey_addr as usize, pubkey_length as usize)?;
         info!("pubkey={:?}", String::from_utf8(pubkey)?);
 
-        let private_key_length = Cursor::new(read_process_memory(process_handle, reference + 0x28, 4)?).read_u32::<LittleEndian>()?;
-        let private_key_addr = Cursor::new(read_process_memory(process_handle, reference + 0x18, 4)?).read_u32::<LittleEndian>()?;
-        let private_key = read_process_memory(process_handle, private_key_addr as usize, private_key_length as usize)?;
+        let private_key_length =
+            Cursor::new(read_process_memory(process_handle, reference + 0x28, 4)?)
+                .read_u32::<LittleEndian>()?;
+        let private_key_addr =
+            Cursor::new(read_process_memory(process_handle, reference + 0x18, 4)?)
+                .read_u32::<LittleEndian>()?;
+        let private_key = read_process_memory(
+            process_handle,
+            private_key_addr as usize,
+            private_key_length as usize,
+        )?;
         info!("private_key={:?}", String::from_utf8(private_key)?);
-
 
         CloseHandle(handle);
         CloseHandle(process_handle);
